@@ -7,6 +7,7 @@ import {
   deleteProduct,
   createProduct,
   updateProduct,
+  getProductsByCategory,
 } from '../controllers/productController.js'
 import { isAdmin, protect } from '../middlewares/authMiddleware.js'
 
@@ -16,5 +17,11 @@ router
   .get(getProductById)
   .delete(protect, isAdmin, deleteProduct)
   .put(protect, isAdmin, updateProduct)
+
+// from here
+
+router.route('/searchByCategory/:id').get(getProductsByCategory)
+
+// to here
 
 export default router

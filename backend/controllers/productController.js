@@ -16,6 +16,21 @@ const getProductById = asyncHandler(async (req, res) => {
   }
 })
 
+// from here
+
+const getProductsByCategory = asyncHandler(async (req, res) => {
+  console.log(req.params.id)
+  const products = await Product.find({ category: req.params.id })
+  if (products.length > 0) {
+    res.json(products)
+  } else {
+    res.status(404)
+    throw new Error(`products not found`)
+  }
+})
+
+// to here
+
 const deleteProduct = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id)
 
@@ -74,4 +89,5 @@ export {
   deleteProduct,
   createProduct,
   updateProduct,
+  getProductsByCategory,
 }
