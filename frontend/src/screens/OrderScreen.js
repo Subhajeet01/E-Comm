@@ -1,8 +1,14 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
+import axios from 'axios'
+import { PayPalButton } from 'react-paypal-button-v2'
 import { Row, Col, ListGroup, Image, Card, Button } from 'react-bootstrap'
 import { useDispatch, useSelector } from 'react-redux'
 import { Link } from 'react-router-dom'
-import { deliverOrder, getOrderDetails } from '../actions/orderActions'
+import {
+  deliverOrder,
+  getOrderDetails,
+  payOrder,
+} from '../actions/orderActions'
 import Loader from '../components/Loader'
 import Message from '../components/Message'
 import { ORDER_DELIVER_RESET } from '../constants/orderConstants'
@@ -11,8 +17,13 @@ const OrderScreen = ({ match, history }) => {
   const orderId = match.params.id
   const dispatch = useDispatch()
 
+  const [sdk, setSdk] = useState(false)
+
   const orderDetails = useSelector((state) => state.orderDetails)
   const { order, loading, error } = orderDetails
+
+  const orderPay = useSelector((state) => state.orderPay)
+  const { loading: loadingPay, success: successPay } = orderPay
 
   const userLogin = useSelector((state) => state.userLogin)
   const { userInfo } = userLogin
@@ -34,15 +45,37 @@ const OrderScreen = ({ match, history }) => {
     )
   }
 
+  const successPaymentHandler = (paymentResult) => {
+    console.log(paymentResult)
+    dispatch(payOrder(orderId, paymentResult))
+  }
+
   useEffect(() => {
+    const addPayPalScript = async () => {
+      const { data: clientId } = await axios.get('/api/config/paypal')
+      const script = document.createElement('script')
+      script.type = 'text/javascript'
+      script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}`
+      script.async = true
+      script.onload = () => {
+        setSdk(true)
+      }
+      document.body.appendChild(script)
+    }
     if (!userInfo) {
       history.push('/login')
     }
-    if (!order || successDeliver) {
+    if (!order || successDeliver || successPay) {
       dispatch({ type: ORDER_DELIVER_RESET })
       dispatch(getOrderDetails(orderId))
+    } else if (!order.isPaid) {
+      if (!window.paypal) {
+        addPayPalScript()
+      } else {
+        setSdk(true)
+      }
     }
-  }, [dispatch, orderId, order, successDeliver, userInfo, history])
+  }, [dispatch, orderId, order, successDeliver, userInfo, history, successPay])
 
   const deliverHandler = () => {
     dispatch(deliverOrder(order))
@@ -164,6 +197,15 @@ const OrderScreen = ({ match, history }) => {
                   <Col>${order.totalPrice}</Col>
                 </Row>
               </ListGroup.Item>
+              {loadingPay && <Loader />}
+              {!sdk ? (
+                <Loader />
+              ) : (
+                <PayPalButton
+                  amount={order.totalPrice}
+                  onSuccess={successPaymentHandler}
+                />
+              )}
             </ListGroup>
             <ListGroup>
               {userInfo && userInfo.isAdmin && !order.isDelivered && (

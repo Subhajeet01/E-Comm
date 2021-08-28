@@ -6,12 +6,14 @@ import {
   getOrderById,
   getOrders,
   updateOrderToDelivered,
+  updateOrderToPaid,
 } from '../controllers/orderController.js'
 import { protect, isAdmin } from '../middlewares/authMiddleware.js'
 
 router.route('/').post(protect, addOrderItems).get(protect, isAdmin, getOrders)
 router.route('/myorders').get(protect, getMyOrders)
 router.route('/:id/deliver').put(protect, isAdmin, updateOrderToDelivered)
+router.route('/:id/pay').put(protect, updateOrderToPaid)
 // make sure this route at the end, otherwise it will search for id in the url
 router.route('/:id').get(protect, getOrderById)
 
