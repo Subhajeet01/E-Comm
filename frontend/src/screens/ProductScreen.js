@@ -9,6 +9,7 @@ import {
 } from '../actions/productActions'
 import Loader from '../components/Loader'
 import Message from '../components/Message'
+import Meta from '../components/Meta'
 import { PRODUCT_CREATE_REVIEW_RESET } from '../constants/productConstants'
 
 const ProductScreen = (props) => {
@@ -56,6 +57,7 @@ const ProductScreen = (props) => {
 
   return (
     <>
+      <Meta title={product.name} />
       <Link to='/' className='btn btn-light my-3'>
         Go back
       </Link>
